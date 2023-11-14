@@ -2,9 +2,9 @@ package com.asim.androidfeatures
 
 import android.app.Activity
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
+import androidx.appcompat.app.AppCompatActivity
 import com.asim.androidfeatures.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -47,8 +47,8 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == REQUEST_CODE_FILE_EXPLORER && resultCode == Activity.RESULT_OK) {
             // Get the URI of the selected file
             val uri = data?.data
-            // Use the URI to perform operations on the selected file
-            // For example, you can read the file contents or get its path
+            val filePath: String? = PathUtil.getRealPathFromURI(this, uri!!)
+            // Use this filePath to open a file
         }
     }
 
