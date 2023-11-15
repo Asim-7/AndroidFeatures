@@ -19,7 +19,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainBinding: ActivityMainBinding
     private val REQUEST_CODE_FILE_EXPLORER = 2
     private val REQUEST_CODE_READ_EXTERNAL_STORAGE = 3
-    private val CREATE_FILE_REQUEST_CODE = 4
+    private val REQUEST_CODE_CREATE_FILE = 4
+    private val REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 5
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +46,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             saveFileButton.setOnClickListener {
-                saveFileUsingFileExplorer(this@MainActivity)
+                // Check if the permission is already granted
+                when (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    PackageManager.PERMISSION_GRANTED -> {
+                        saveFileUsingFileExplorer(this@MainActivity)
+                    }
+
+                    else -> {
+                        requestWritePermission()
+                    }
+                }
             }
         }
     }
@@ -56,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         intent.type = "text/plain" // Set the MIME type of the file you want to save
         // Optionally, you can set a default file name using:
         // intent.putExtra(Intent.EXTRA_TITLE, "myFile.txt")
-        activity.startActivityForResult(intent, CREATE_FILE_REQUEST_CODE)
+        activity.startActivityForResult(intent, REQUEST_CODE_CREATE_FILE)
     }
 
     // Function to open the file explorer
@@ -80,13 +90,12 @@ class MainActivity : AppCompatActivity() {
                     // Use this filePath to open a file
                 }
 
-                CREATE_FILE_REQUEST_CODE -> {
+                REQUEST_CODE_CREATE_FILE -> {
                     data?.data?.let { uri ->
                         // Handle the saved file URI here
                         // You can perform operations like writing data to the file using the content resolver
                         val filePath: String? = FileUtils.getPath(this, uri)
                         // Use this filePath to use save file
-
                     }
                 }
             }
@@ -101,15 +110,24 @@ class MainActivity : AppCompatActivity() {
                 openFileExplorer(this@MainActivity)
             } else {
                 // Permission is denied
-                showPermissionRationaleDialog()
+                showPermissionRationaleDialog("This permission is required to open files from external storage.")
+            }
+        }
+        if (requestCode == REQUEST_CODE_WRITE_EXTERNAL_STORAGE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission is granted
+                saveFileUsingFileExplorer(this@MainActivity)
+            } else {
+                // Permission is denied
+                showPermissionRationaleDialog("This permission is required to save files to external storage.")
             }
         }
     }
 
-    private fun showPermissionRationaleDialog() {
+    private fun showPermissionRationaleDialog(messageText: String) {
         AlertDialog.Builder(this)
             .setTitle("Permission Needed")
-            .setMessage("This permission is required to open files from external storage.")
+            .setMessage(messageText)
             .setPositiveButton("OK") { dialog, _ ->
                 openPermissionSettings()
                 dialog.dismiss()
@@ -132,6 +150,14 @@ class MainActivity : AppCompatActivity() {
             this@MainActivity,
             arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
             REQUEST_CODE_READ_EXTERNAL_STORAGE
+        )
+    }
+
+    private fun requestWritePermission() {
+        ActivityCompat.requestPermissions(
+            this@MainActivity,
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            REQUEST_CODE_WRITE_EXTERNAL_STORAGE
         )
     }
 
