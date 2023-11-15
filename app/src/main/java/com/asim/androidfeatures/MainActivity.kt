@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == REQUEST_CODE_FILE_EXPLORER && resultCode == Activity.RESULT_OK) {
             // Get the URI of the selected file
             val uri = data?.data
-            val filePath: String? = PathUtil.getRealPathFromURI(this, uri!!)
+            val filePath: String? = FileUtils.getPath(this, uri!!)
             // Use this filePath to open a file
         }
     }
