@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainBinding: ActivityMainBinding
     private val REQUEST_CODE_FILE_EXPLORER = 2
     private val REQUEST_CODE_READ_EXTERNAL_STORAGE = 3
+    private val CREATE_FILE_REQUEST_CODE = 4
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,9 +45,18 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             saveFileButton.setOnClickListener {
-                // TODO
+                saveFileUsingFileExplorer(this@MainActivity)
             }
         }
+    }
+
+    private fun saveFileUsingFileExplorer(activity: Activity) {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.type = "text/plain" // Set the MIME type of the file you want to save
+        // Optionally, you can set a default file name using:
+        // intent.putExtra(Intent.EXTRA_TITLE, "myFile.txt")
+        activity.startActivityForResult(intent, CREATE_FILE_REQUEST_CODE)
     }
 
     // Function to open the file explorer
@@ -61,11 +71,25 @@ class MainActivity : AppCompatActivity() {
     // Handle the result of the file explorer
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_FILE_EXPLORER && resultCode == Activity.RESULT_OK) {
-            // Get the URI of the selected file
-            val uri = data?.data
-            val filePath: String? = FileUtils.getPath(this, uri!!)
-            // Use this filePath to open a file
+        if (resultCode == Activity.RESULT_OK) {
+            when (requestCode) {
+                REQUEST_CODE_FILE_EXPLORER -> {
+                    // Get the URI of the selected file
+                    val uri = data?.data
+                    val filePath: String? = FileUtils.getPath(this, uri!!)
+                    // Use this filePath to open a file
+                }
+
+                CREATE_FILE_REQUEST_CODE -> {
+                    data?.data?.let { uri ->
+                        // Handle the saved file URI here
+                        // You can perform operations like writing data to the file using the content resolver
+                        val filePath: String? = FileUtils.getPath(this, uri)
+                        // Use this filePath to use save file
+
+                    }
+                }
+            }
         }
     }
 
