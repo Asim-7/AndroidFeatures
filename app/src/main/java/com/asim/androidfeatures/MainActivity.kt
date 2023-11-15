@@ -88,6 +88,7 @@ class MainActivity : AppCompatActivity() {
                     val uri = data?.data
                     val filePath: String? = FileUtils.getPath(this, uri!!)
                     // Use this filePath to open a file
+                    mainBinding.pathText.text = filePath
                 }
 
                 REQUEST_CODE_CREATE_FILE -> {
@@ -96,6 +97,7 @@ class MainActivity : AppCompatActivity() {
                         // You can perform operations like writing data to the file using the content resolver
                         val filePath: String? = FileUtils.getPath(this, uri)
                         // Use this filePath to use save file
+                        mainBinding.pathText.text = filePath
                     }
                 }
             }
