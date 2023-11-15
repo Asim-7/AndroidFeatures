@@ -13,7 +13,6 @@ import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.asim.androidfeatures.databinding.ActivityMainBinding
 import java.io.File
 import java.io.FileOutputStream
@@ -22,10 +21,9 @@ import java.util.Date
 class MainActivity : AppCompatActivity() {
 
     private lateinit var mainBinding: ActivityMainBinding
-    private val REQUEST_CODE_FILE_EXPLORER = 2
-    private val REQUEST_CODE_READ_EXTERNAL_STORAGE = 3
+    private val REQUEST_CODE_ALL_PERMISSIONS = 2
+    private val REQUEST_CODE_FILE_EXPLORER = 3
     private val REQUEST_CODE_CREATE_FILE = 4
-    private val REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 5
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,30 +37,13 @@ class MainActivity : AppCompatActivity() {
                 takeScreenshot()
             }
             openFileButton.setOnClickListener {
-                // Check if the permission is already granted
-                when (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                    PackageManager.PERMISSION_GRANTED -> {
-                        openFileExplorer(this@MainActivity)
-                    }
-
-                    else -> {
-                        requestReadPermission()
-                    }
-                }
+                openFileExplorer(this@MainActivity)
             }
             saveFileButton.setOnClickListener {
-                // Check if the permission is already granted
-                when (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    PackageManager.PERMISSION_GRANTED -> {
-                        saveFileUsingFileExplorer(this@MainActivity)
-                    }
-
-                    else -> {
-                        requestWritePermission()
-                    }
-                }
+                saveFileUsingFileExplorer(this@MainActivity)
             }
         }
+        requestAllPermissions()
     }
 
     private fun saveFileUsingFileExplorer(activity: Activity) {
@@ -111,36 +92,26 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_READ_EXTERNAL_STORAGE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission is granted
-                openFileExplorer(this@MainActivity)
-            } else {
-                // Permission is denied
-                showPermissionRationaleDialog("This permission is required to open files from external storage.")
-            }
-        }
-        if (requestCode == REQUEST_CODE_WRITE_EXTERNAL_STORAGE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission is granted
-                saveFileUsingFileExplorer(this@MainActivity)
-            } else {
-                // Permission is denied
-                showPermissionRationaleDialog("This permission is required to save files to external storage.")
-            }
+        if (grantResults.isEmpty()) {
+            showPermissionRationaleDialog()
+        } else {
+            val anyRejected = grantResults.any { it != PackageManager.PERMISSION_GRANTED }
+            if (anyRejected) showPermissionRationaleDialog()
         }
     }
 
-    private fun showPermissionRationaleDialog(messageText: String) {
+    private fun showPermissionRationaleDialog() {
         AlertDialog.Builder(this)
             .setTitle("Permission Needed")
-            .setMessage(messageText)
+            .setMessage("Grant all permissions to use the application.")
             .setPositiveButton("OK") { dialog, _ ->
                 openPermissionSettings()
                 dialog.dismiss()
+                finish()
             }
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
+                finish()
             }
             .show()
     }
@@ -152,29 +123,20 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun requestReadPermission() {
+    private fun requestAllPermissions() {
         ActivityCompat.requestPermissions(
             this@MainActivity,
-            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-            REQUEST_CODE_READ_EXTERNAL_STORAGE
-        )
-    }
-
-    private fun requestWritePermission() {
-        ActivityCompat.requestPermissions(
-            this@MainActivity,
-            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-            REQUEST_CODE_WRITE_EXTERNAL_STORAGE
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            REQUEST_CODE_ALL_PERMISSIONS
         )
     }
 
     private fun takeScreenshot() {
-        val now = Date()
-        DateFormat.format("yyyy-MM-dd_hh:mm:ss", now)
+        val timeStamp = DateFormat.format("yyyyMMdd_hhmmss", Date())
         try {
             // image naming and path  to include sd card  appending name you choose for file
-            val targetImageFile = File("/storage/emulated/0/Download", "test1234.jpg")
-            //val mPath = Environment.getExternalStorageDirectory().toString() + "/" + "test1234" + ".jpg"
+            val targetImageFile = File("/storage/emulated/0/Download", "image$timeStamp.jpg")
+            if (targetImageFile.exists()) return        // ideally we should delete this file but for now just leaving it out
 
             // create bitmap screen capture
             val v1 = window.decorView.rootView
@@ -195,6 +157,7 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             // Several error may come out with file handling or DOM
             e.printStackTrace()
+            mainBinding.pathText.text = e.message
         }
     }
 
