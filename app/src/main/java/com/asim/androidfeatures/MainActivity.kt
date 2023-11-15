@@ -4,15 +4,20 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.text.format.DateFormat
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.asim.androidfeatures.databinding.ActivityMainBinding
+import java.io.File
+import java.io.FileOutputStream
+import java.util.Date
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,7 +36,7 @@ class MainActivity : AppCompatActivity() {
 
         with(mainBinding) {
             screenshotButton.setOnClickListener {
-                // TODO
+                takeScreenshot()
             }
             openFileButton.setOnClickListener {
                 // Check if the permission is already granted
@@ -161,6 +166,36 @@ class MainActivity : AppCompatActivity() {
             arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
             REQUEST_CODE_WRITE_EXTERNAL_STORAGE
         )
+    }
+
+    private fun takeScreenshot() {
+        val now = Date()
+        DateFormat.format("yyyy-MM-dd_hh:mm:ss", now)
+        try {
+            // image naming and path  to include sd card  appending name you choose for file
+            val targetImageFile = File("/storage/emulated/0/Download", "test1234.jpg")
+            //val mPath = Environment.getExternalStorageDirectory().toString() + "/" + "test1234" + ".jpg"
+
+            // create bitmap screen capture
+            val v1 = window.decorView.rootView
+            v1.isDrawingCacheEnabled = true
+            val bitmap = Bitmap.createBitmap(v1.drawingCache)
+            v1.isDrawingCacheEnabled = false
+            //val imageFile = File(mPath)
+
+            val outputStream = FileOutputStream(targetImageFile)
+            val quality = 100
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            outputStream.flush()
+            outputStream.close()
+
+            mainBinding.pathText.text = targetImageFile.absolutePath
+
+            //openScreenshot(imageFile)
+        } catch (e: Exception) {
+            // Several error may come out with file handling or DOM
+            e.printStackTrace()
+        }
     }
 
 }
